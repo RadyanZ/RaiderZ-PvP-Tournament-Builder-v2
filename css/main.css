@@ -302,6 +302,19 @@ small#exportDate {
 .raiderz .edge-left{margin-right:.2em}
 .raiderz .edge-right{margin-left:.2em}
 
+.rules-box{
+  background:#0f0f18;
+  border:1px solid #2a2a55;
+  border-radius:12px;
+  padding:12px;
+  line-height:1.5;
+}
+
+.rules-box.locked{
+  opacity:.7;
+  pointer-events:none;
+}
+
 
 
 
