@@ -1,6 +1,3 @@
-/* ===============================
-   STATE / HELPERS
-================================ */
 const historyKey = "rz_tournament_history";
 
 let players = [];
@@ -8,22 +5,62 @@ let stats = {};
 let matches = [];
 let generated = false;
 
+let matchResults = new Map();
+let shuffleLocked = false;
+
 const el = (id) => document.getElementById(id);
+
+/* ===============================
+   RULES & TOURNAMENT TYPE
+================================ */
+const officialToggle = el("officialToggle");
+const tournamentType = el("tournamentType");
+const rulesContent = el("rulesContent");
+
+officialToggle.onchange = updateRules;
+tournamentType.onchange = updateRules;
+
+function updateRules() {
+  const isOfficial = officialToggle.checked;
+
+  if (tournamentType.value === "roundrobin" && isOfficial) {
+    rulesContent.innerHTML = `
+      <strong>Round Robin – Official Tournament</strong><br><br>
+      Each participant fights every other participant exactly once.
+      Rankings are decided by total victories, then losses.<br><br>
+      <strong>Allowed equipment:</strong><br>
+      • Termis gear<br>
+      • Weapon level 1<br>
+      • No jewels<br>
+      • No accessories<br>
+      • No costume
+    `;
+  } else {
+    rulesContent.innerHTML = `
+      <strong>Round Robin – Unofficial Tournament</strong><br><br>
+      A relaxed tournament format where each participant fights every other participant once.<br><br>
+      <strong>Allowed equipment:</strong><br>
+      Any gear, weapons, jewels, accessories, and costumes are allowed.
+    `;
+  }
+}
+
+updateRules();
 
 /* ===============================
    PARTICIPANTS
 ================================ */
 el("addPlayerBtn").onclick = addPlayer;
-el("playerName").addEventListener("keydown", (e) => {
+el("playerName").addEventListener("keydown", e => {
   if (e.key === "Enter") addPlayer();
 });
 
 function addPlayer() {
-  const n = el("playerName").value.trim();
-  if (!n || players.includes(n)) return;
+  const name = el("playerName").value.trim();
+  if (!name || players.includes(name)) return;
 
-  players.push(n);
-  stats[n] = { w: 0, l: 0 };
+  players.push(name);
+  stats[name] = { w: 0, l: 0 };
 
   el("playerName").value = "";
   renderPlayers();
@@ -40,39 +77,29 @@ function renderPlayers() {
 }
 
 /* ===============================
-   MATCHES (ROUND ROBIN)
+   MATCHES
 ================================ */
 el("generateBtn").onclick = generateMatches;
 el("shuffleBtn").onclick = shuffleMatches;
 
-let matchResults = new Map(); // key: "A|B" , value: winner
-let shuffleLocked = false;
-
-
 function generateMatches() {
-  if (generated) {
-    renderMatches();
-    return;
-  }
-  if (players.length < 2) return;
+  if (generated || players.length < 2) return;
 
   generated = true;
+  lockRules();
+
   matches = [];
-
   const pool = [...players];
-  const isOdd = pool.length % 2 !== 0;
-  const playersRR = isOdd ? [...pool, null] : [...pool];
-  const totalRounds = playersRR.length - 1;
+  if (pool.length % 2 !== 0) pool.push(null);
 
-  for (let round = 0; round < totalRounds; round++) {
-    for (let i = 0; i < playersRR.length / 2; i++) {
-      const p1 = playersRR[i];
-      const p2 = playersRR[playersRR.length - 1 - i];
-      if (p1 && p2) matches.push([p1, p2]);
+  for (let r = 0; r < pool.length - 1; r++) {
+    for (let i = 0; i < pool.length / 2; i++) {
+      const a = pool[i];
+      const b = pool[pool.length - 1 - i];
+      if (a && b) matches.push([a, b]);
     }
-    // rotate (except first)
-    const last = playersRR.pop();
-    playersRR.splice(1, 0, last);
+    const last = pool.pop();
+    pool.splice(1, 0, last);
   }
 
   renderMatches();
@@ -89,47 +116,43 @@ function renderMatches() {
   m.innerHTML = "";
 
   matches.forEach(([a, b]) => {
-  const d = document.createElement("div");
-  d.className = "match";
+    const d = document.createElement("div");
+    d.className = "match";
 
-  const b1 = document.createElement("button");
-  const b2 = document.createElement("button");
-  const vs = document.createElement("span");
-  vs.className = "vs";
-  vs.textContent = "VS";
+    const b1 = document.createElement("button");
+    const b2 = document.createElement("button");
+    const vs = document.createElement("span");
+    vs.className = "vs";
+    vs.textContent = "VS";
 
-  b1.textContent = a;
-  b2.textContent = b;
+    b1.textContent = a;
+    b2.textContent = b;
 
-  const key = `${a}|${b}`;
-  const savedWinner = matchResults.get(key);
+    const key = `${a}|${b}`;
+    const saved = matchResults.get(key);
 
-  if (savedWinner === a) b1.classList.add("winner");
-  if (savedWinner === b) b2.classList.add("winner");
+    if (saved === a) b1.classList.add("winner");
+    if (saved === b) b2.classList.add("winner");
 
-  b1.onclick = () => setWinner(a, b, b1, b2, key);
-  b2.onclick = () => setWinner(b, a, b2, b1, key);
+    b1.onclick = () => setWinner(a, b, b1, b2, key);
+    b2.onclick = () => setWinner(b, a, b2, b1, key);
 
-  d.append(b1, vs, b2);
-  m.appendChild(d);
-});
+    d.append(b1, vs, b2);
+    m.appendChild(d);
+  });
 }
 
 function setWinner(w, l, wb, lb, key) {
   shuffleLocked = true;
 
   const prev = matchResults.get(key);
-
   if (prev === w) return;
 
-  // undo previous result
   if (prev) {
     stats[prev].w--;
-    const prevLoser = prev === w ? l : w;
-    stats[prevLoser].l--;
+    stats[prev === w ? l : w].l--;
   }
 
-  // apply new result
   matchResults.set(key, w);
   stats[w].w++;
   stats[l].l++;
@@ -141,191 +164,62 @@ function setWinner(w, l, wb, lb, key) {
 }
 
 /* ===============================
-   RANKING (TABLE-LIKE)
-   Requires you to render rows as columns:
-   Rank | Name | Victories | Losses | Points
+   LOCK RULES
+================================ */
+function lockRules() {
+  tournamentType.disabled = true;
+  officialToggle.disabled = true;
+  rulesContent.classList.add("locked");
+}
 
-   Expected HTML:
-   <div class="ranking-table">
-     <div class="ranking-head">
-       <div>Rank</div><div>Name</div><div>Victories</div><div>Losses</div><div>Points</div>
-     </div>
-     <ul id="ranking" class="ranking-list"></ul>
-   </div>
+/* ===============================
+   RANKING
 ================================ */
 function renderRanking() {
   const ul = el("ranking");
   ul.innerHTML = "";
 
-  // sort primarily by wins desc, then losses asc, then name asc
-  const sorted = [...players].sort((a, b) => {
-    const dw = stats[b].w - stats[a].w;
-    if (dw !== 0) return dw;
-    const dl = stats[a].l - stats[b].l;
-    if (dl !== 0) return dl;
-    return a.localeCompare(b);
-  });
+  [...players]
+    .sort((a, b) => stats[b].w - stats[a].w || stats[a].l - stats[b].l)
+    .forEach((p, i) => {
+  const li = document.createElement("li");
 
-  sorted.forEach((p, i) => {
-    let star = "";
-   if (i === 0) star = '<i class="fa-solid fa-medal" style="font-size:18px;color:gold"></i>';
-   if (i === 1) star = '<i class="fa-solid fa-medal" style="font-size:18px;color:silver"></i>';
-   if (i === 2) star = '<i class="fa-solid fa-medal" style="font-size:18px;color:#cd7f32"></i>';
+  let medal = "";
+if (i === 0) {
+  li.classList.add("gold");
+  medal = "🥇 ";
+} else if (i === 1) {
+  li.classList.add("silver");
+  medal = "🥈 ";
+} else if (i === 2) {
+  li.classList.add("bronze");
+  medal = "🥉 ";
+}
 
-    // Simple points rule: 3 points per win (change if you want)
-    const pts = stats[p].w * 3;
+  li.innerHTML = `
+    <div>${medal}${i + 1}</div>
+    <div>${p}</div>
+    <div>${stats[p].w}</div>
+    <div>${stats[p].l}</div>
+    <div>${stats[p].w * 3}</div>
+  `;
 
-    const li = document.createElement("li");
-    li.className = `rank-row ${i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : ""}`;
+  ul.appendChild(li);
+});
 
-    li.innerHTML = `
-      <div class="col-rank">${i + 1}</div>
-      <div class="col-name">${escapeHtml(p)} ${star}</div>
-      <div class="col-num">${stats[p].w}</div>
-      <div class="col-num">${stats[p].l}</div>
-      <div class="col-num">${pts}</div>
-    `;
+  el("exportTitle").textContent =
+    el("tournamentName").value || "Tournament #";
 
-    ul.appendChild(li);
-  });
+  el("exportType").textContent =
+    officialToggle.checked ? "Official Tournament" : "Unofficial Tournament";
 
-  // Export panel labels
-  el("exportTitle").textContent = el("tournamentName").value || "Official Tournament Ranking";
-  el("exportDate").textContent = el("tournamentDate").value || new Date().toLocaleDateString();
+  el("exportDate").textContent =
+    el("tournamentDate").value || new Date().toLocaleDateString();
 }
 
 /* ===============================
-   EXPORT IMAGE
+   RESET
 ================================ */
-el("exportImageBtn").onclick = () => {
-  if (el("ranking").children.length === 0) return alert("Nothing to export");
-
-  html2canvas(el("exportArea"), {
-    backgroundColor: "#0b0b10",
-    useCORS: true,
-  }).then((c) => {
-    const a = document.createElement("a");
-    a.download = "tournament.png";
-    a.href = c.toDataURL();
-    a.click();
-  });
-};
-
-/* ===============================
-   HISTORY
-================================ */
-el("saveHistoryBtn").onclick = saveHistory;
-el("resetBtn").onclick = resetTournament;
-
-function saveHistory() {
-  if (players.length === 0) return alert("Nothing to save");
-
-  const h = JSON.parse(localStorage.getItem(historyKey) || "[]");
-
-  // store ranking snapshot with w/l
-  const rankingSnapshot = [...players]
-    .sort((a, b) => stats[b].w - stats[a].w)
-    .map((p) => ({ name: p, w: stats[p].w, l: stats[p].l }));
-
-  h.push({
-    name: el("tournamentName").value || "Unnamed",
-    date: el("tournamentDate").value || new Date().toLocaleDateString(),
-    ranking: rankingSnapshot,
-  });
-
-  localStorage.setItem(historyKey, JSON.stringify(h));
-  renderHistory();
-}
-
-function resetTournament() {
-  players = [];
-  stats = {};
-  matches = [];
-  generated = false;
-
-  el("playerList").innerHTML = "";
-  el("matches").innerHTML = "";
-  el("ranking").innerHTML = "";
-
-  el("tournamentName").value = "";
-  el("tournamentDate").value = "";
-  matchResults.clear();
-shuffleLocked = false;
-}
-
-function renderHistory() {
-  const c = el("history");
-  c.innerHTML = "";
-
-  const h = JSON.parse(localStorage.getItem(historyKey) || "[]");
-
-  h.forEach((t, i) => {
-    const d = document.createElement("div");
-    d.className = "history-card";
-
-    const rankingLines = t.ranking
-      .map((r, idx) => `${idx + 1}. ${escapeHtml(r.name)} (${r.w}W-${r.l}L)`)
-      .join("<br>");
-
-    d.innerHTML = `
-      <button class="danger" style="float:right" onclick="deleteHistory(${i})">Delete</button>
-      <strong>${escapeHtml(t.name)}</strong> (${escapeHtml(t.date)})<br>
-      ${rankingLines}
-    `;
-
-    c.appendChild(d);
-  });
-}
-
-function deleteHistory(i) {
-  const h = JSON.parse(localStorage.getItem(historyKey) || "[]");
-  h.splice(i, 1);
-  localStorage.setItem(historyKey, JSON.stringify(h));
-  renderHistory();
-}
-
-/* ===============================
-   IMPORT / EXPORT HISTORY FILE
-================================ */
-el("exportHistoryBtn").onclick = () => {
-  const h = localStorage.getItem(historyKey) || "[]";
-  const blob = new Blob([h], { type: "text/plain" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "raiderz_history.txt";
-  a.click();
-};
-
-el("importHistoryBtn").onclick = () => el("importFile").click();
-
-el("importFile").onchange = (e) => {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-
-  const r = new FileReader();
-  r.onload = () => {
-    localStorage.setItem(historyKey, String(r.result || "[]"));
-    renderHistory();
-  };
-  r.readAsText(file);
-};
-
-/* ===============================
-   UTIL
-================================ */
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-/* ===============================
-   INITIAL RENDER
-================================ */
-renderHistory();
-renderRanking();
+el("resetBtn").onclick = () => location.reload();
 
 
