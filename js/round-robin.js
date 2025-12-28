@@ -182,30 +182,23 @@ function renderRanking() {
   [...players]
     .sort((a, b) => stats[b].w - stats[a].w || stats[a].l - stats[b].l)
     .forEach((p, i) => {
-  const li = document.createElement("li");
+      const li = document.createElement("li");
 
-  let medal = "";
-if (i === 0) {
-  li.classList.add("gold");
-  medal = "🥇 ";
-} else if (i === 1) {
-  li.classList.add("silver");
-  medal = "🥈 ";
-} else if (i === 2) {
-  li.classList.add("bronze");
-  medal = "🥉 ";
-}
+      let medal = "";
+      if (i === 0) { li.classList.add("gold"); medal = "🥇 "; }
+      else if (i === 1) { li.classList.add("silver"); medal = "🥈 "; }
+      else if (i === 2) { li.classList.add("bronze"); medal = "🥉 "; }
 
-  li.innerHTML = `
-    <div>${medal}${i + 1}</div>
-    <div>${p}</div>
-    <div>${stats[p].w}</div>
-    <div>${stats[p].l}</div>
-    <div>${stats[p].w * 3}</div>
-  `;
+      li.innerHTML = `
+        <div>${medal}${i + 1}</div>
+        <div>${p}</div>
+        <div>${stats[p].w}</div>
+        <div>${stats[p].l}</div>
+        <div>${stats[p].w * 3}</div>
+      `;
 
-  ul.appendChild(li);
-});
+      ul.appendChild(li);
+    });
 
   el("exportTitle").textContent =
     el("tournamentName").value || "Tournament #";
@@ -218,8 +211,30 @@ if (i === 0) {
 }
 
 /* ===============================
+   EXPORT IMAGE (TWEMOJI FIX)
+================================ */
+el("exportImageBtn").onclick = () => {
+  const exportArea = el("exportArea");
+
+  // Convert emojis to SVGs for html2canvas
+  twemoji.parse(exportArea, { folder: "svg", ext: ".svg" });
+
+  html2canvas(exportArea, {
+    backgroundColor: "#0b0b10",
+    scale: 2,
+    useCORS: true
+  }).then(canvas => {
+    const link = document.createElement("a");
+    link.download = "tournament-ranking.png";
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+};
+
+/* ===============================
    RESET
 ================================ */
 el("resetBtn").onclick = () => location.reload();
+
 
 
