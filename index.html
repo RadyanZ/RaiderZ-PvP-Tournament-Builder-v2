@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RaiderZ PvP Tournament Builder</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+
+<header>
+ 
+  <div class="left">
+    <button id="exportHistoryBtn" class="secondary">Export History</button>
+    <button id="importHistoryBtn" class="secondary">Import History</button>
+    <input type="file" id="importFile" hidden>
+  </div>
+
+  <div class="right">
+    <button id="resetBtn" class="danger">Reset</button>
+  </div>
+</header>
+  
+<main>
+<div class="stage">
+ <img src="images/raiderz-logo.png" class="raiderz-logo" alt="raiderz logo">
+<div class="raiderz">
+  <span class="edge edge-left">R</span>AIDER<span class="edge edge-right">Z</span>
+  </div>
+  </div>
+<h1>
+  RaiderZ PvP Tournament Builder<br>
+  <small style="color:var(--purple)">Built by Radyan and KoKoRo</small>
+</h1>
+
+<div class="section">
+  <h2>1. Tournament Info</h2>
+  <div class="center">
+    <input id="tournamentName" placeholder="Tournament name">
+    <input id="tournamentDate" type="date">
+  </div>
+</div>
+
+<div class="section">
+  <h2>2. Tournament Type</h2>
+  <div class="center">
+    <select id="tournamentType">
+      <option value="roundrobin">Round Robin</option>
+      <option value="single" disabled>Single Elimination (in development)</option>
+    </select>
+  </div>
+</div>
+
+<div class="section">
+  <h2>3. Participants</h2>
+  <div class="center">
+    <input id="playerName" type="text" placeholder="Player name">
+    <button id="addPlayerBtn">Add</button>
+  </div>
+  <ul id="playerList" class="center"></ul>
+</div>
+
+<div class="section">
+  <h2>4. Matches</h2>
+  <div class="center">
+    <button id="generateBtn">Generate Matches</button>
+    <button id="shuffleBtn" class="secondary">Shuffle</button>
+  </div>
+  <div id="matches"></div>
+</div>
+
+<div class="section">
+  <h2>5. Leaderboard</h2>
+
+  <div id="exportArea">
+    <div class="center" style="margin-bottom:10px">
+      <img src="images/kokoro.png" class="kokoro-logo"><br>
+      <strong id="exportTitle"></strong><br>
+    </div>
+    <div class="ranking-table">
+  <div class="ranking-head">
+    <div>Rank</div>
+    <div>Name</div>
+    <div>Victories</div>
+    <div>Losses</div>
+    <div>Points</div>
+  </div>
+  <ul id="ranking" class="ranking-list"></ul>
+</div>
+    <small id="exportDate"></small>
+  </div>
+
+  <div class="center">
+    <button id="exportImageBtn">Export Image</button>
+    <button id="saveHistoryBtn" class="secondary">Save to History</button>
+  </div>
+</div>
+
+<div class="section">
+  <h2>6. Historical Rankings</h2>
+  <div id="history"></div>
+</div>
+
+</main>
+  
+<script src="js/round-robin.js" defer></script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
