@@ -244,6 +244,107 @@ el("exportImageBtn").onclick = async () => {
   });
 };
 
+/* ===============================
+   HISTORY SAVE / LOAD
+================================ */
+
+el("saveHistoryBtn").onclick = saveHistory;
+el("exportHistoryBtn").onclick = exportHistory;
+el("importHistoryBtn").onclick = () => el("importFile").click();
+el("importFile").onchange = importHistory;
+
+function saveHistory() {
+  if (!generated) return;
+
+  const history = loadHistory();
+
+  const ranking = [...players]
+    .sort((a, b) => stats[b].w - stats[a].w || stats[a].l - stats[b].l)
+    .map((p, i) => ({
+      rank: i + 1,
+      name: p,
+      w: stats[p].w,
+      l: stats[p].l,
+      points: stats[p].w * 3
+    }));
+
+  history.push({
+    name: el("tournamentName").value || "Tournament #",
+    date: el("tournamentDate").value || new Date().toLocaleDateString(),
+    official: officialToggle.checked,
+    type: tournamentType.value,
+    ranking
+  });
+
+  localStorage.setItem(historyKey, JSON.stringify(history));
+  renderHistory();
+}
+
+
+function loadHistory() {
+  return JSON.parse(localStorage.getItem(historyKey)) || [];
+}
+
+function renderHistory() {
+  const container = el("history");
+  container.innerHTML = "";
+
+  loadHistory().forEach((t, i) => {
+    const div = document.createElement("div");
+    div.className = "history-card";
+
+    const rows = t.ranking
+      .slice(0, 3)
+      .map(r => {
+        const medal =
+          r.rank === 1 ? "🥇" :
+          r.rank === 2 ? "🥈" :
+          r.rank === 3 ? "🥉" : "";
+        return `${medal} ${r.name} – ${r.points} pts`;
+      })
+      .join("<br>");
+
+    div.innerHTML = `
+      <strong>${t.name}</strong><br>
+      <small>${t.official ? "Official" : "Unofficial"} – ${t.date}</small>
+      <div style="margin:8px 0">${rows}</div>
+      <button onclick="deleteHistory(${i})">Delete</button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+
+function deleteHistory(index) {
+  const history = loadHistory();
+  history.splice(index, 1);
+  localStorage.setItem(historyKey, JSON.stringify(history));
+  renderHistory();
+}
+
+function exportHistory() {
+  const data = JSON.stringify(loadHistory(), null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "raiderz-tournament-history.json";
+  a.click();
+}
+
+function importHistory(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    localStorage.setItem(historyKey, reader.result);
+    renderHistory();
+  };
+  reader.readAsText(file);
+}
+
 
 /* ===============================
    RESET
@@ -253,6 +354,8 @@ el("resetBtn").onclick = () => location.reload();
 document.addEventListener("DOMContentLoaded", () => {
   twemoji.parse(document.body);
 });
+
+renderHistory();
 
 
 
