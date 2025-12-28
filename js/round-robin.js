@@ -213,28 +213,47 @@ function renderRanking() {
 /* ===============================
    EXPORT IMAGE (TWEMOJI FIX)
 ================================ */
-el("exportImageBtn").onclick = () => {
+/* ===============================
+   EXPORT IMAGE (STABLE)
+================================ */
+el("exportImageBtn").onclick = async () => {
   const exportArea = el("exportArea");
 
-  // Convert emojis to SVGs for html2canvas
-  twemoji.parse(exportArea, { folder: "svg", ext: ".svg" });
+  // Esperar a que todas las imágenes carguen
+  const images = exportArea.querySelectorAll("img");
+  await Promise.all(
+    [...images].map(img =>
+      img.complete
+        ? Promise.resolve()
+        : new Promise(res => {
+            img.onload = img.onerror = res;
+          })
+    )
+  );
 
   html2canvas(exportArea, {
     backgroundColor: "#0b0b10",
     scale: 2,
-    useCORS: true
+    useCORS: true,
+    allowTaint: false
   }).then(canvas => {
     const link = document.createElement("a");
     link.download = "tournament-ranking.png";
-    link.href = canvas.toDataURL();
+    link.href = canvas.toDataURL("image/png");
     link.click();
   });
 };
+
 
 /* ===============================
    RESET
 ================================ */
 el("resetBtn").onclick = () => location.reload();
+
+document.addEventListener("DOMContentLoaded", () => {
+  twemoji.parse(document.body);
+});
+
 
 
 
