@@ -31,6 +31,7 @@ function updateRules() {
       <strong>Allowed equipment:</strong><br>
       • Termis gear<br>
       • Weapon level 1<br>
+      • No enchantment<br>
       • No jewels<br>
       • No accessories<br>
       • No costume
@@ -356,6 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 renderHistory();
+
 
 
 
