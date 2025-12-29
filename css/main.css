@@ -24,15 +24,27 @@
 ================================ */
 header, main{ position:relative; z-index:1; }
 body{
-  position:relative; 
+  position:relative;
   margin:0;
   font-family:Arial,sans-serif;
-  background:radial-gradient(1200px 600px at 50% -100px,#1a1630,var(--bg));
+
+  /* WALLPAPER */
+  background:
+    linear-gradient(
+      rgba(11,11,16,0.85),
+      rgba(11,11,16,0.85)
+    ),
+    url("../images/wallpaper.webp");
+
   background-repeat:no-repeat;
   background-size:cover;
+  background-position:center;
   background-attachment:fixed;
+
   color:#eee;
 }
+
+
 main{
   position:relative;
   z-index:1;
@@ -314,6 +326,7 @@ small#exportDate {
   opacity:.7;
   pointer-events:none;
 }
+
 
 
 
