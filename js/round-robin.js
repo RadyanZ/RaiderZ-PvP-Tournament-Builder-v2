@@ -31,10 +31,10 @@ function updateRules() {
       <strong>Allowed equipment:</strong><br>
       • Termis gear<br>
       • Weapon level 1<br>
-      • No enchantment<br>
+	  • No enchantment<br>
+	  • No buffs<br>
       • No jewels<br>
       • No accessories<br>
-      • No buffs<br>
       • No costume
     `;
   } else {
@@ -353,11 +353,6 @@ function importHistory(e) {
 ================================ */
 el("resetBtn").onclick = () => location.reload();
 
-document.addEventListener("DOMContentLoaded", () => {
-  twemoji.parse(document.body);
-});
-
-renderHistory();
 
 
 
