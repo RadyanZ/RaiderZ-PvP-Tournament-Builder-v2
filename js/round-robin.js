@@ -34,6 +34,7 @@ function updateRules() {
       • No enchantment<br>
       • No jewels<br>
       • No accessories<br>
+      • No buffs<br>
       • No costume
     `;
   } else {
@@ -357,6 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 renderHistory();
+
 
 
 
